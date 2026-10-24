@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.sqlite3
+
+# Django
+media/
+staticfiles/
+
+# Секреты — в репозиторий не попадают
+.env
+
+# Node / Vue
+node_modules/
+dist/
+.vite/
+
+# IDE и ОС
+.vscode/
+.idea/
+.DS_Store
