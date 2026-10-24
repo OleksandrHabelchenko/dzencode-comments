@@ -1,0 +1,52 @@
+# Описание всех сервисов проекта.
+# Одна команда поднимает всё окружение целиком.
+
+services:
+
+  # База данных MySQL
+  db:
+    image: mysql:8.0
+    container_name: comments_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      # Данные БД хранятся в volume, а не внутри контейнера.
+      # Контейнер можно пересоздать — база сохранится.
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3307:3306"   # снаружи 3307, чтобы не конфликтовать с локальным MySQL
+    healthcheck:
+      # Django не должен стартовать раньше, чем база будет готова принимать подключения.
+      # start_period даёт MySQL время на первичную инициализацию —
+      # неудачные проверки в этот период не считаются провалом.
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 90s
+
+  # Django-приложение
+  backend:
+    build: ./backend
+    container_name: comments_backend
+    restart: unless-stopped
+    user: "1000:1000"
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      # Папка с кодом подключается внутрь контейнера:
+      # меняешь файл на компьютере — изменения сразу внутри, без пересборки
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy   # ждём, пока healthcheck базы пройдёт
+
+volumes:
+  mysql_data:
