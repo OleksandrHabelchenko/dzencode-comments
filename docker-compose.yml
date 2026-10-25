@@ -3,7 +3,7 @@
 
 services:
 
-  # База данных MySQL
+# База данных MySQL
   db:
     image: mysql:8.0
     container_name: comments_db
@@ -29,6 +29,20 @@ services:
       retries: 20
       start_period: 90s
 
+  # Redis: кеш, брокер очереди Celery и слой для WebSocket
+  redis:
+    image: redis:7-alpine
+    container_name: comments_redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"   # снаружи 6380, чтобы не конфликтовать с локальным Redis
+    healthcheck:
+      # Django и Celery не должны стартовать раньше, чем Redis будет готов
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   # Django-приложение
   backend:
     build: ./backend
@@ -46,7 +60,29 @@ services:
       - .env
     depends_on:
       db:
-        condition: service_healthy   # ждём, пока healthcheck базы пройдёт
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+  
+
+  # Celery worker: выполняет фоновые задачи из очереди
+  celery:
+    build: ./backend
+    container_name: comments_celery
+    restart: unless-stopped
+    user: "1000:1000"
+    # -A config указывает, где искать настройки Celery
+    # --loglevel=info показывает, какие задачи выполняются
+    command: celery -A config worker --loglevel=info
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   mysql_data:

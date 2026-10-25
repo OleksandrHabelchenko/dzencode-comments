@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'comments',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'django_celery_results',
 ]
 
 MIDDLEWARE = [
@@ -183,3 +184,51 @@ SIMPLE_JWT = {
     # Заголовок запроса: Authorization: Bearer <token>
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+# --- Redis ---
+
+REDIS_HOST = config('REDIS_HOST', default='redis')
+REDIS_PORT = config('REDIS_PORT', default=6379, cast=int)
+REDIS_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}'
+
+# Кеш. База 1 — для кеша, чтобы не смешивать с очередью Celery.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': f'{REDIS_URL}/1',
+        'KEY_PREFIX': 'comments',
+    }
+}
+
+# Время жизни кеша списка комментариев (секунды).
+# Короткое: список меняется часто, устаревшие данные не нужны.
+COMMENTS_CACHE_TTL = 60
+
+# --- Celery ---
+
+# База 0 — очередь задач
+CELERY_BROKER_URL = f'{REDIS_URL}/0'
+
+# Повторять попытки подключения к брокеру при старте.
+# В Celery 6 это станет поведением по умолчанию;
+# явная настройка убирает предупреждение в логах.
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+# Результаты задач храним в БД: их можно посмотреть в админке,
+# и они переживают перезапуск Redis
+CELERY_RESULT_BACKEND = 'django-db'
+
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+
+
+# Задача, выполняющаяся дольше 5 минут, будет прервана —
+# защита от зависших процессов
+CELERY_TASK_TIME_LIMIT = 300
+
+# Воркер берёт одну задачу за раз.
+# Без этого он забирает пачку впрок, и при падении они теряются.
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1

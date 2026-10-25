@@ -4,6 +4,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .captcha import create_captcha, validate_captcha
 from rest_framework.permissions import IsAdminUser
+from django.core.cache import cache
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+
+from .tasks import invalidate_comments_cache, notify_parent_author
 
 from .models import Comment
 from .pagination import CommentPagination
@@ -76,13 +81,19 @@ class CommentListCreateView(generics.ListCreateAPIView):
         """
         Создание комментария.
 
-        После сохранения отдаём объект полным сериализатором,
-        чтобы фронт сразу получил созданную запись со всеми полями
-        и мог вставить её в список без дополнительного запроса.
+        После сохранения ставим две фоновые задачи:
+        сброс устаревшего кеша и уведомление автора родительского
+        комментария. Пользователь не ждёт их выполнения.
         """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         comment = serializer.save()
+
+        # delay() ставит задачу в очередь и сразу возвращает управление
+        invalidate_comments_cache.delay()
+
+        if comment.parent_id:
+            notify_parent_author.delay(comment.id)
 
         output = CommentSerializer(comment, context={'request': request})
         return Response(output.data, status=status.HTTP_201_CREATED)
