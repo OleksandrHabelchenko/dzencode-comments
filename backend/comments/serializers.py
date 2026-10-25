@@ -8,6 +8,8 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 
 from .text_validation import clean_comment_text
 
+from .file_validation import process_attachment
+
 class AttachmentSerializer(serializers.ModelSerializer):
     """
     Вложение в формате JSON.
@@ -109,6 +111,9 @@ class CommentCreateSerializer(serializers.ModelSerializer):
     # write_only означает "принять и проверить, в ответ не возвращать"
     captcha_key = serializers.CharField(write_only=True)
     captcha_value = serializers.CharField(write_only=True)
+    # Файл приходит отдельным полем формы (multipart/form-data).
+    # required=False — вложение необязательно
+    attachment_file = serializers.FileField(write_only=True, required=False)
 
     class Meta:
         model = Comment
@@ -120,6 +125,7 @@ class CommentCreateSerializer(serializers.ModelSerializer):
         'text',
         'captcha_key',
         'captcha_value',
+        'attachment_file',
         )
         
     def validate(self, attrs):
@@ -162,14 +168,34 @@ class CommentCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """
-        Сохраняем комментарий, добавив данные клиента из запроса.
-        Пользователь их не вводит — сервер берёт сам из HTTP-заголовков.
+        Сохраняем комментарий и, если есть, прикреплённый файл.
+
+        Файл обрабатывается после создания комментария,
+        потому что Attachment ссылается на него через ForeignKey.
         """
+        uploaded_file = validated_data.pop('attachment_file', None)
+
         request = self.context.get('request')
         if request:
             validated_data['ip_address'] = self._get_client_ip(request)
             validated_data['user_agent'] = request.META.get('HTTP_USER_AGENT', '')[:500]
-        return super().create(validated_data)
+
+        comment = super().create(validated_data)
+
+        if uploaded_file:
+            try:
+                attachment_data = process_attachment(uploaded_file)
+            except DjangoValidationError as exc:
+                # Комментарий уже создан — удаляем его,
+                # чтобы не остался без обещанного вложения
+                comment.delete()
+                raise serializers.ValidationError(
+                    {'attachment_file': exc.messages}
+                )
+
+            Attachment.objects.create(comment=comment, **attachment_data)
+
+        return comment
 
     @staticmethod
     def _get_client_ip(request) -> str | None:
