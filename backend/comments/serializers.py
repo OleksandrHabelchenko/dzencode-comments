@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from .models import Comment, Attachment
 
+from .captcha import validate_captcha
 
 class AttachmentSerializer(serializers.ModelSerializer):
     """
@@ -31,7 +32,7 @@ class CommentSerializer(serializers.ModelSerializer):
     replies заполняется рекурсивно: каждый ответ сериализуется
     тем же классом, поэтому глубина дерева не ограничена.
     """
-
+    
     attachment = AttachmentSerializer(read_only=True)
     replies = serializers.SerializerMethodField()
 
@@ -100,10 +101,39 @@ class CommentCreateSerializer(serializers.ModelSerializer):
     на вход и на выход нужны разные наборы полей:
     клиент не присылает id, created_at, ip_address — их ставит сервер.
     """
+    # Поля капчи приходят от клиента, но в модели их нет —
+    # write_only означает "принять и проверить, в ответ не возвращать"
+    captcha_key = serializers.CharField(write_only=True)
+    captcha_value = serializers.CharField(write_only=True)
 
     class Meta:
         model = Comment
-        fields = ('parent', 'user_name', 'email', 'home_page', 'text')
+        fields = (
+        'parent',
+        'user_name',
+        'email',
+        'home_page',
+        'text',
+        'captcha_key',
+        'captcha_value',
+        )
+        
+    def validate(self, attrs):
+        """
+        Проверка капчи перед сохранением.
+
+        Делаем это в validate(), а не в отдельном validate_captcha_value(),
+        потому что нужны сразу два поля: ключ и введённое значение.
+        """
+        key = attrs.pop('captcha_key', None)
+        value = attrs.pop('captcha_value', None)
+
+        if not validate_captcha(key, value):
+            raise serializers.ValidationError(
+                {'captcha_value': 'Неверный код с картинки'}
+            )
+
+        return attrs
 
     def validate_parent(self, value):
         """

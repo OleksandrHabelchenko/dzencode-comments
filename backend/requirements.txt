@@ -5,3 +5,4 @@ Django~=5.2.0                 # веб-фреймворк
 djangorestframework~=3.16.0   # REST API (SPA общается с backend через JSON)
 mysqlclient~=2.2.0            # драйвер MySQL для Django ORM
 python-decouple~=3.8          # чтение настроек из .env, чтобы пароли не лежали в коде
+Pillow~=11.0.0                # генерация изображений (капча, ресайз картинок)

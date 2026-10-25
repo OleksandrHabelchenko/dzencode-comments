@@ -1,6 +1,8 @@
 from django.db.models import Count, Prefetch
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from .captcha import create_captcha, validate_captcha
 
 from .models import Comment
 from .pagination import CommentPagination
@@ -111,3 +113,14 @@ class CommentThreadView(generics.RetrieveAPIView):
             'replies__replies',
             'replies__replies__replies',
         )
+
+class CaptchaView(APIView):
+    """
+    GET /api/comments/captcha/ — новая капча.
+
+    Фронтенд вызывает этот эндпоинт при открытии формы
+    и при нажатии кнопки "обновить картинку".
+    """
+
+    def get(self, request):
+        return Response(create_captcha())
