@@ -15,6 +15,8 @@ from decouple import config, Csv
 
 from pathlib import Path
 
+from datetime import timedelta
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -40,6 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'comments',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 MIDDLEWARE = [
@@ -143,3 +147,39 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # MEDIA_URL — префикс в адресе, MEDIA_ROOT — физический путь на диске.
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Настройки REST Framework.
+# JWT стоит первым в списке аутентификации, сессии оставлены
+# для удобной работы с браузерным интерфейсом DRF при разработке.
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+    # По умолчанию доступ открыт: комментарии анонимные.
+    # Эндпоинты, требующие прав, ограничиваются точечно.
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',
+    ),
+}
+
+# Настройки JWT
+SIMPLE_JWT = {
+    # Короткий срок жизни access-токена: если его украдут,
+    # окно для злоупотребления будет небольшим
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+
+    # Refresh-токен живёт дольше и служит для получения нового access
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+
+    # При обновлении выдаётся новый refresh-токен,
+    # а старый попадает в чёрный список — украденный станет бесполезен
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+
+    # Заголовок запроса: Authorization: Bearer <token>
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}

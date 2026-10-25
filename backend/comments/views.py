@@ -3,6 +3,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .captcha import create_captcha, validate_captcha
+from rest_framework.permissions import IsAdminUser
 
 from .models import Comment
 from .pagination import CommentPagination
@@ -124,3 +125,16 @@ class CaptchaView(APIView):
 
     def get(self, request):
         return Response(create_captcha())
+
+
+class CommentDeleteView(generics.DestroyAPIView):
+    """
+    DELETE /api/comments/<id>/delete/ — удаление комментария.
+
+    Только для администраторов, доступ по JWT-токену.
+    Удаление каскадное: вместе с комментарием исчезают
+    все ответы на него и прикреплённые файлы.
+    """
+
+    queryset = Comment.objects.all()
+    permission_classes = [IsAdminUser]

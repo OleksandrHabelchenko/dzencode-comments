@@ -1,10 +1,11 @@
 # Основные зависимости backend-части.
 # Версии зафиксированы, чтобы сборка была воспроизводимой.
 
-Django~=5.2.0                 # веб-фреймворк
-djangorestframework~=3.16.0   # REST API (SPA общается с backend через JSON)
-mysqlclient~=2.2.0            # драйвер MySQL для Django ORM
-python-decouple~=3.8          # чтение настроек из .env, чтобы пароли не лежали в коде
-Pillow~=11.0.0                # генерация изображений (капча, ресайз картинок)
-bleach~=6.2.0                 # очистка HTML от опасных тегов и атрибутов
-lxml~=5.3.0                   # строгий XML-парсер для проверки валидности XHTML
+Django~=5.2.0                          # веб-фреймворк
+djangorestframework~=3.16.0            # REST API (SPA общается с backend через JSON)
+mysqlclient~=2.2.0                     # драйвер MySQL для Django ORM
+python-decouple~=3.8                   # чтение настроек из .env, чтобы пароли не лежали в коде
+Pillow~=11.0.0                         # генерация изображений (капча, ресайз картинок)
+bleach~=6.2.0                          # очистка HTML от опасных тегов и атрибутов
+lxml~=5.3.0                            # строгий XML-парсер для проверки валидности XHTML
+djangorestframework-simplejwt~=5.5.0   # JWT-токены для DRF

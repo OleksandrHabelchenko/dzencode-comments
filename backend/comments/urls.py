@@ -1,9 +1,14 @@
 from django.urls import path
 
-from .views import CommentListCreateView, CommentThreadView, CaptchaView
+from .views import (
+    CommentListCreateView,
+    CommentThreadView,
+    CaptchaView,
+    CommentDeleteView,
+)
 
 # Пространство имён приложения: позволяет ссылаться на маршруты
-# как 'comments:list', не конфликтуя с другими приложениями
+# как 'comments:list-create', не конфликтуя с другими приложениями
 app_name = 'comments'
 
 urlpatterns = [
@@ -12,4 +17,5 @@ urlpatterns = [
     # что конкретный адрес проверяется раньше шаблона с параметром
     path('captcha/', CaptchaView.as_view(), name='captcha'),
     path('<int:pk>/', CommentThreadView.as_view(), name='thread'),
+    path('<int:pk>/delete/', CommentDeleteView.as_view(), name='delete'),
 ]
