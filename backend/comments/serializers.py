@@ -4,6 +4,10 @@ from .models import Comment, Attachment
 
 from .captcha import validate_captcha
 
+from django.core.exceptions import ValidationError as DjangoValidationError
+
+from .text_validation import clean_comment_text
+
 class AttachmentSerializer(serializers.ModelSerializer):
     """
     Вложение в формате JSON.
@@ -143,6 +147,18 @@ class CommentCreateSerializer(serializers.ModelSerializer):
         if value is not None and not Comment.objects.filter(pk=value.pk).exists():
             raise serializers.ValidationError('Родительский комментарий не найден')
         return value
+
+    def validate_text(self, value: str) -> str:
+        """
+        Проверяет и очищает текст сообщения.
+
+        DRF ожидает свой тип исключения, поэтому ошибку Django
+        переводим в serializers.ValidationError.
+        """
+        try:
+            return clean_comment_text(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.messages)
 
     def create(self, validated_data):
         """
