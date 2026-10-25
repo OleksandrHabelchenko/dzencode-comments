@@ -22,6 +22,20 @@ class Comment(models.Model):
         verbose_name='Родительский комментарий',
     )
 
+    # Ссылка на самый верхний комментарий ветки.
+    # Нужна для производительности: чтобы достать всё дерево ответов
+    # одним запросом (filter(root=X)), а не обходить уровни рекурсивно.
+    # У заглавного комментария root = None.
+    root = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='descendants',
+        verbose_name='Корневой комментарий ветки',
+    )
+
+
     # --- Данные пользователя (требования ТЗ) ---
     user_name = models.CharField(
         max_length=50,
@@ -79,10 +93,22 @@ class Comment(models.Model):
         # Сортировка по умолчанию — LIFO: новые сверху.
         ordering = ['-created_at']
         indexes = [
-            # Составной индекс ускоряет главный запрос:
-            # "взять заглавные комментарии, отсортировать по дате"
             models.Index(fields=['parent', '-created_at']),
+            # Ускоряет выборку всех потомков ветки
+            models.Index(fields=['root', 'created_at']),
         ]
+
+    def save(self, *args, **kwargs):
+        """
+        Автоматически проставляем root перед сохранением.
+
+        Если у комментария есть родитель — берём root родителя,
+        а если родитель сам заглавный, то им и становится root.
+        Так вся ветка ссылается на один и тот же корень.
+        """
+        if self.parent is not None:
+            self.root = self.parent.root or self.parent
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f'{self.user_name}: {self.text[:50]}'
