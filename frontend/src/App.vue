@@ -4,15 +4,19 @@
 // Собирает вместе форму, таблицу комментариев и пагинацию,
 // подписывается на обновления по WebSocket.
 
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 
 import CommentForm from '@/components/CommentForm.vue'
 import CommentTable from '@/components/CommentTable.vue'
+import FileLightbox from '@/components/FileLightbox.vue'
 import PaginationBar from '@/components/PaginationBar.vue'
 import { useWebSocket } from '@/composables/useWebSocket'
 import { useCommentsStore } from '@/stores/comments'
 
 const store = useCommentsStore()
+
+// Вложение, открытое в модальном окне
+const activeAttachment = ref(null)
 
 // Новые комментарии прилетают по WebSocket и попадают
 // в список без перезагрузки страницы
@@ -35,8 +39,7 @@ function onCommentCreated() {
 }
 
 function onOpenAttachment(attachment) {
-  // Просмотр файлов с анимацией — следующий шаг
-  window.open(attachment.file_url, '_blank')
+  activeAttachment.value = attachment
 }
 </script>
 
@@ -63,6 +66,10 @@ function onOpenAttachment(attachment) {
 
       <PaginationBar />
     </section>
+      <FileLightbox
+      :attachment="activeAttachment"
+      @close="activeAttachment = null"
+    />
   </main>
 </template>
 

@@ -24,11 +24,16 @@ class AttachmentSerializer(serializers.ModelSerializer):
         fields = ('id', 'file_url', 'file_type', 'original_name', 'width', 'height')
 
     def get_file_url(self, obj) -> str | None:
-        """Абсолютный URL файла (http://host/media/...)."""
-        request = self.context.get('request')
-        if obj.file and request:
-            return request.build_absolute_uri(obj.file.url)
-        return None
+        """
+        Относительный путь к файлу (/media/...).
+
+        Не используем build_absolute_uri: за прокси он подставит
+        внутреннее имя хоста (backend), недоступное из браузера.
+        Относительный путь работает и при разработке, и в продакшене.
+        """
+        if not obj.file:
+            return None
+        return obj.file.url
 
 
 class CommentSerializer(serializers.ModelSerializer):
