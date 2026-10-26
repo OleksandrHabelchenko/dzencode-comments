@@ -1,63 +1,100 @@
 <script setup>
-// Временная страница: форма + простой список.
-// Полноценный интерфейс с таблицей и деревом — на следующем шаге.
+// Главная страница приложения.
+//
+// Собирает вместе форму, таблицу комментариев и пагинацию,
+// подписывается на обновления по WebSocket.
 
 import { onMounted } from 'vue'
 
 import CommentForm from '@/components/CommentForm.vue'
+import CommentTable from '@/components/CommentTable.vue'
+import PaginationBar from '@/components/PaginationBar.vue'
+import { useWebSocket } from '@/composables/useWebSocket'
 import { useCommentsStore } from '@/stores/comments'
 
 const store = useCommentsStore()
+
+// Новые комментарии прилетают по WebSocket и попадают
+// в список без перезагрузки страницы
+const { isConnected } = useWebSocket('/ws/comments/', (message) => {
+  if (message.type === 'comment.created') {
+    store.addFromWebSocket(message.comment)
+  }
+})
 
 onMounted(() => {
   store.fetchComments()
 })
 
-// После успешной отправки перезагружаем список,
-// чтобы новый комментарий появился на экране
-function onCreated() {
-  store.fetchComments()
+function onCommentCreated() {
+  // Список обновится по WebSocket, но на случай
+  // обрыва соединения перезагружаем его явно
+  if (!isConnected.value) {
+    store.fetchComments()
+  }
+}
+
+function onOpenAttachment(attachment) {
+  // Просмотр файлов с анимацией — следующий шаг
+  window.open(attachment.file_url, '_blank')
 }
 </script>
 
 <template>
   <main>
-    <h1>Комментарии</h1>
+    <header class="page-header">
+      <h1>Комментарии</h1>
 
-    <CommentForm @created="onCreated" />
+      <span class="status" :class="{ 'is-online': isConnected }">
+        {{ isConnected ? 'Обновления в реальном времени' : 'Нет соединения' }}
+      </span>
+    </header>
 
-    <p v-if="store.isLoading">Загрузка…</p>
-    <p v-else-if="store.error" class="error">{{ store.error }}</p>
+    <CommentForm @created="onCommentCreated" />
 
-    <template v-else>
-      <p class="muted">Всего заглавных комментариев: {{ store.totalCount }}</p>
+    <section>
+      <p class="muted count">
+        Заглавных комментариев: {{ store.totalCount }}
+      </p>
 
-      <ul class="list">
-        <li v-for="comment in store.comments" :key="comment.id">
-          <strong>{{ comment.user_name }}</strong>
-          <span class="muted"> · {{ comment.email }}</span>
-          <p v-html="comment.text" />
-        </li>
-      </ul>
-    </template>
+      <p v-if="store.error" class="error">{{ store.error }}</p>
+
+      <CommentTable @open-attachment="onOpenAttachment" />
+
+      <PaginationBar />
+    </section>
   </main>
 </template>
 
 <style scoped>
-h1 {
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: calc(var(--spacing) * 1.5);
 }
 
-.list {
-  list-style: none;
-  margin-top: var(--spacing);
+.status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-text-muted);
 }
 
-.list li {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: var(--spacing);
+.status::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-danger);
+}
+
+.status.is-online::before {
+  background: #3fb950;
+}
+
+.count {
   margin-bottom: 12px;
 }
 </style>
