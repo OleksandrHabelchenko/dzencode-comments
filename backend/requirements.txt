@@ -15,3 +15,4 @@ django-celery-results~=2.5.0           # хранение результатов
 channels~=4.2.0                        # WebSocket для Django
 channels-redis~=4.2.0                  # передача сообщений между процессами через Redis
 daphne~=4.1.0                          # ASGI-сервер, умеет держать постоянные соединения
+django-cors-headers~=4.6.0             # разрешения для запросов с другого домена

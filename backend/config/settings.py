@@ -46,10 +46,12 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'django_celery_results',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -252,3 +254,17 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+# --- CORS ---
+
+# Адреса, с которых разрешены запросы к API.
+# Список, а не CORS_ALLOW_ALL_ORIGINS=True: открывать API
+# всему интернету незачем даже при разработке.
+CORS_ALLOWED_ORIGINS = config(
+    'CORS_ALLOWED_ORIGINS',
+    default='http://localhost:5173,http://127.0.0.1:5173',
+    cast=Csv(),
+)
+
+# Разрешаем передачу cookie — понадобится для сессий
+CORS_ALLOW_CREDENTIALS = True

@@ -3,7 +3,7 @@
 
 services:
 
-# База данных MySQL
+  # База данных MySQL
   db:
     image: mysql:8.0
     container_name: comments_db
@@ -83,6 +83,24 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+
+  # Vue-приложение в режиме разработки
+  frontend:
+    build: ./frontend
+    container_name: comments_frontend
+    restart: unless-stopped
+    volumes:
+      # Код подключается внутрь контейнера для горячей перезагрузки
+      - ./frontend:/app
+      # Пустой том поверх node_modules: не даёт папке с хоста
+      # перекрыть зависимости, установленные внутри образа
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
 
 volumes:
   mysql_data:
