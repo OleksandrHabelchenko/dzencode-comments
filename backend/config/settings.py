@@ -34,6 +34,7 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='', cast=Csv())
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -232,3 +233,22 @@ CELERY_TASK_TIME_LIMIT = 300
 # Воркер берёт одну задачу за раз.
 # Без этого он забирает пачку впрок, и при падении они теряются.
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+
+# --- WebSocket (Django Channels) ---
+
+# Точка входа для ASGI-сервера. Django продолжает использовать
+# WSGI_APPLICATION для обычных HTTP-запросов, но Daphne берёт этот.
+ASGI_APPLICATION = 'config.asgi.application'
+
+# Слой каналов: через него процессы обмениваются сообщениями.
+# Redis нужен потому, что HTTP-запрос обрабатывает один процесс,
+# а WebSocket-соединение держит другой — напрямую они не общаются.
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            # База 2: отдельно от кеша (1) и очереди Celery (0)
+            'hosts': [f'{REDIS_URL}/2'],
+        },
+    },
+}

@@ -12,3 +12,6 @@ djangorestframework-simplejwt~=5.5.0   # JWT-токены для DRF
 redis~=5.2.0                           # клиент Redis для кеша и брокера
 celery~=5.4.0                          # очередь фоновых задач
 django-celery-results~=2.5.0           # хранение результатов задач в БД
+channels~=4.2.0                        # WebSocket для Django
+channels-redis~=4.2.0                  # передача сообщений между процессами через Redis
+daphne~=4.1.0                          # ASGI-сервер, умеет держать постоянные соединения
