@@ -30,3 +30,82 @@ body {
   margin: 0 auto;
   padding: calc(var(--spacing) * 2) var(--spacing);
 }
+
+// Элементы форм: собраны в одном месте,
+// чтобы поля выглядели одинаково во всех компонентах
+
+input,
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 15px;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+
+  &.has-error {
+    border-color: var(--color-danger);
+  }
+}
+
+textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+input[type='file'] {
+  padding: 8px;
+  font-size: 14px;
+}
+
+.error {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-danger);
+  font-size: 13px;
+}
+
+.muted {
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+.button-primary,
+.button-secondary {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.button-primary {
+  background: var(--color-accent);
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.button-secondary {
+  background: transparent;
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+
+  &:hover {
+    color: var(--color-text);
+  }
+}

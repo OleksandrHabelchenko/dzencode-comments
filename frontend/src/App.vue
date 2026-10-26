@@ -1,33 +1,42 @@
 <script setup>
+// Временная страница: форма + простой список.
+// Полноценный интерфейс с таблицей и деревом — на следующем шаге.
 
 import { onMounted } from 'vue'
 
+import CommentForm from '@/components/CommentForm.vue'
 import { useCommentsStore } from '@/stores/comments'
 
 const store = useCommentsStore()
 
-// onMounted срабатывает после появления компонента на странице
 onMounted(() => {
   store.fetchComments()
 })
+
+// После успешной отправки перезагружаем список,
+// чтобы новый комментарий появился на экране
+function onCreated() {
+  store.fetchComments()
+}
 </script>
 
 <template>
   <main>
     <h1>Комментарии</h1>
 
-    <p v-if="store.isLoading">Загрузка…</p>
+    <CommentForm @created="onCreated" />
 
+    <p v-if="store.isLoading">Загрузка…</p>
     <p v-else-if="store.error" class="error">{{ store.error }}</p>
 
     <template v-else>
       <p class="muted">Всего заглавных комментариев: {{ store.totalCount }}</p>
 
-      <ul>
+      <ul class="list">
         <li v-for="comment in store.comments" :key="comment.id">
           <strong>{{ comment.user_name }}</strong>
           <span class="muted"> · {{ comment.email }}</span>
-          <p>{{ comment.text }}</p>
+          <p v-html="comment.text" />
         </li>
       </ul>
     </template>
@@ -36,28 +45,19 @@ onMounted(() => {
 
 <style scoped>
 h1 {
-  margin-bottom: var(--spacing);
+  margin-bottom: calc(var(--spacing) * 1.5);
 }
 
-ul {
+.list {
   list-style: none;
   margin-top: var(--spacing);
 }
 
-li {
+.list li {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   padding: var(--spacing);
   margin-bottom: 12px;
-}
-
-.muted {
-  color: var(--color-text-muted);
-  font-size: 14px;
-}
-
-.error {
-  color: var(--color-danger);
 }
 </style>
