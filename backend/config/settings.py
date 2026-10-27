@@ -158,7 +158,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
     ),
     # По умолчанию доступ открыт: комментарии анонимные.
     # Эндпоинты, требующие прав, ограничиваются точечно.
@@ -301,3 +300,11 @@ if not DEBUG:
     # Страницу нельзя встроить в iframe на чужом сайте —
     # защита от кликджекинга
     X_FRAME_OPTIONS = 'DENY'
+# В разработке добавляем сессионную аутентификацию — она нужна
+# для браузерного интерфейса DRF. В продакшене её нет: иначе
+# у залогиненного в админку пользователя DRF требует CSRF-токен,
+# и анонимная отправка комментария падает с ошибкой 403
+if DEBUG:
+    REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += (
+        'rest_framework.authentication.SessionAuthentication',
+    )
