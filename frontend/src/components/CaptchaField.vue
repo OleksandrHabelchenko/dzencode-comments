@@ -1,24 +1,24 @@
 <script setup>
 // Поле капчи: картинка с кодом, поле ввода и кнопка обновления.
 //
-// Ключ капчи хранится в компоненте и передаётся наверх
-// через v-model — форма отправляет его вместе с остальными полями.
+// Клик по картинке открывает её увеличенной — если код
+// трудно разобрать в мелком размере.
 
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 
 import { commentsApi } from '@/api/comments'
 
-const props = defineProps({
+defineProps({
   modelValue: { type: String, default: '' },
   error: { type: String, default: '' },
 })
 
-// Два события: введённый код и ключ капчи
 const emit = defineEmits(['update:modelValue', 'update:captchaKey'])
 
 const image = ref('')
 const isLoading = ref(false)
 const loadError = ref('')
+const isZoomed = ref(false)
 
 /**
  * Запрашивает новую капчу.
@@ -27,6 +27,7 @@ const loadError = ref('')
 async function refresh() {
   isLoading.value = true
   loadError.value = ''
+  isZoomed.value = false
 
   try {
     const data = await commentsApi.getCaptcha()
@@ -40,6 +41,31 @@ async function refresh() {
   }
 }
 
+function onKeydown(event) {
+  if (event.key === 'Escape') {
+    isZoomed.value = false
+  }
+}
+
+// Пока открыта увеличенная картинка, страница под ней
+// не должна прокручиваться — то же поведение, что у лайтбокса
+watch(isZoomed, (value) => {
+  if (value) {
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', onKeydown)
+  } else {
+    document.body.style.overflow = ''
+    document.removeEventListener('keydown', onKeydown)
+  }
+})
+
+// Если компонент исчезнет с открытой картинкой,
+// прокрутка осталась бы заблокированной навсегда
+onUnmounted(() => {
+  document.body.style.overflow = ''
+  document.removeEventListener('keydown', onKeydown)
+})
+
 // Родительский компонент вызывает refresh() после отправки формы
 defineExpose({ refresh })
 
@@ -51,7 +77,11 @@ onMounted(refresh)
     <label for="captcha">Код с картинки *</label>
 
     <div class="captcha__row">
-      <div class="captcha__image">
+      <div
+        class="captcha__image"
+        title="Нажмите, чтобы увеличить"
+        @click="isZoomed = true"
+      >
         <img v-if="image" :src="image" alt="Код с картинки" />
         <span v-else-if="isLoading" class="muted">Загрузка…</span>
         <span v-else-if="loadError" class="error">{{ loadError }}</span>
@@ -80,6 +110,17 @@ onMounted(refresh)
     </div>
 
     <span v-if="error" class="error">{{ error }}</span>
+
+    <!-- Увеличенная картинка поверх страницы.
+         Teleport выносит её из формы, чтобы не зависеть
+         от overflow и z-index родительских элементов -->
+    <Teleport to="body">
+      <Transition name="zoom">
+        <div v-if="isZoomed" class="captcha-zoom" @click="isZoomed = false">
+          <img :src="image" alt="Код с картинки, увеличено" />
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -92,15 +133,21 @@ onMounted(refresh)
 }
 
 .captcha__image {
-  width: 160px;
-  height: 60px;
+  width: 180px;
+  height: 68px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-surface);
+  background: rgba(0, 0, 0, 0.25);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
+  cursor: zoom-in;
+  transition: border-color 0.2s;
+}
+
+.captcha__image:hover {
+  border-color: var(--color-accent);
 }
 
 .captcha__image img {
@@ -110,22 +157,67 @@ onMounted(refresh)
 }
 
 .captcha__refresh {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
   font-size: 20px;
-  background: var(--color-surface);
   color: var(--color-text);
+  background: rgba(0, 0, 0, 0.25);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
+  transition: border-color 0.2s;
 }
 
 .captcha__refresh:hover:not(:disabled) {
   border-color: var(--color-accent);
 }
 
+.captcha__refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .captcha__row input {
-  flex: 1;
+  flex: 0 1 280px;
+  font-size: 18px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+</style>
+
+<style>
+/* Не scoped: элемент вынесен через Teleport в body
+   и стили со scoped до него бы не дошли */
+.captcha-zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  cursor: zoom-out;
+}
+
+.captcha-zoom img {
+  /* Картинка маленькая, увеличиваем втрое.
+     image-rendering сохраняет чёткость при масштабировании */
+  width: 480px;
+  max-width: 90vw;
+  height: auto;
+  border-radius: var(--radius);
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.zoom-enter-active,
+.zoom-leave-active {
+  transition: opacity 0.2s;
+}
+
+.zoom-enter-from,
+.zoom-leave-to {
+  opacity: 0;
 }
 </style>

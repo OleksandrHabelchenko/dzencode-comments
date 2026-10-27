@@ -8,15 +8,15 @@
 
   // Поверхности карточек полупрозрачные: сквозь них
   // просвечивает фон, что и даёт эффект стекла
-  --color-surface: rgba(20, 24, 33, 0.55);
+  --color-surface: rgba(16, 20, 28, 0.38);
   --color-surface-hover: rgba(28, 33, 44, 0.65);
 
   --color-border: rgba(255, 255, 255, 0.08);
   --color-border-strong: rgba(255, 255, 255, 0.14);
 
   --color-text: #e8eaed;
-  --color-text-muted: #8b919c;
-  --color-text-dim: #5f656f;
+  --color-text-muted: #d4d9e0;
+  --color-text-dim: #a8aeb8;
 
   // Приглушённый сине-фиолетовый: заметный, но не кричащий
   --color-accent: #277b54;
@@ -60,6 +60,9 @@ body {
   // без него выглядит слишком жирным
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Тёмная тень за текстом: держит контраст
+     на светлых участках градиентного фона */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
 
@@ -171,7 +174,7 @@ input[type='file'] {
 
 .button-primary {
   background: var(--color-accent);
-  color: #6f7480;
+  color: rgb(172, 175, 182);
   font-weight: 600;
 
   &:hover:not(:disabled) {
@@ -238,4 +241,139 @@ input[type='file'] {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
+}
+// Белый ореол за приглушённым текстом: подписи полей,
+// даты, заголовки таблицы читаются на любом участке фона
+.muted,
+label,
+th,
+.comment__date,
+.link-button,
+::placeholder {
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.45),
+               0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+// --- Точечные правки читаемости ---
+
+// Белая подсветка за зелёными ссылками
+.link-button {
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.85),
+               0 0 4px rgba(255, 255, 255, 0.7);
+}
+
+input[type='file'] {
+  // Поле не растягивается на всю ширину карточки
+  width: auto;
+  max-width: 360px;
+
+  // Та же подсветка за надписью кнопки выбора файла
+  &::file-selector-button {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.85),
+                 0 0 4px rgba(255, 255, 255, 0.7);
+  }
+}
+
+// Белый текст кнопки с тёмной тенью — читается на зелёном фоне
+.button-primary {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+// Зелёные надписи: яркий цвет и тёмный контур
+// вместо размытого белого ореола — так буквы остаются чёткими
+.link-button {
+  color: #6ee7a0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+input[type='file']::file-selector-button {
+  // Плотная тёмная подложка под кнопкой даёт контраст
+  // независимо от того, что за ней на фоне
+  background: rgba(10, 14, 20, 0.8);
+  color: #6ee7a0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+// Белое свечение по контуру больших карточек:
+// отделяет их от фона и добавляет объём
+.form,
+.table-wrapper {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25), 0 0 60px 8px rgba(255, 255, 255, 0.35),
+              0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+// Кнопка предпросмотра оформлена чипом с плотной подложкой.
+// Селектор с .form перебивает scoped-стиль компонента,
+// у которого padding: 0 и прозрачный фон.
+.form button.link-button {
+  display: inline-block;
+  padding: 6px 12px;
+  background: rgba(10, 14, 20, 0.8);
+  border-radius: 8px;
+  color: #6ee7a0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+.form button.link-button:hover {
+  background: rgba(10, 14, 20, 0.95);
+  text-decoration: none;
+}
+
+// Счётчик комментариев крупнее и светлее — это заголовок списка,
+// а не второстепенная подпись
+p.count {
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 500;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+// Ссылка скачивания в лайтбоксе: яркий цвет и плотная подложка —
+// поверх затемнённого фона тонкий зелёный текст терялся
+.lightbox a.lightbox__download {
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #7ef0a8;
+  font-weight: 500;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.lightbox a.lightbox__download:hover {
+  background: rgba(255, 255, 255, 0.2);
+  text-decoration: none;
+}
+
+// Заголовок страницы отдельным шрифтом: акцент на главном,
+// остальной интерфейс остаётся на Inter
+h1 {
+  font-family: 'Unbounded', 'Inter', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+// Декор карточек: точечная сетка и блик по верхнему краю
+.form,
+.table-wrapper {
+  // Точки рисуются радиальным градиентом, который повторяется
+  // по сетке 20x20px. Это фоновое изображение поверх цвета карточки —
+  // никаких лишних элементов в разметке
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.07) 1px,
+    transparent 1px
+  );
+  background-size: 20px 20px;
+
+  // inset-тень светлой линией имитирует блик на верхней грани стекла
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18),
+              0 0 0 1px rgba(255, 255, 255, 0.25),
+              0 0 60px 8px rgba(255, 255, 255, 0.35),
+              0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+// Точечный узор отменён
+.form,
+.table-wrapper {
+  background-image: none;
 }

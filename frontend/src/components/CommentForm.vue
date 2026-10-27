@@ -273,7 +273,12 @@ async function submit() {
 
 <style scoped>
 .form {
-  background: var(--color-surface);
+  background-color: var(--color-surface);
+  /* Блик по верхней грани и свечение вокруг карточки */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18),
+              0 0 0 1px rgba(255, 255, 255, 0.2),
+              0 0 50px rgba(255, 255, 255, 0.28),
+              0 8px 32px rgba(0, 0, 0, 0.35);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   padding: calc(var(--spacing) * 1.5);

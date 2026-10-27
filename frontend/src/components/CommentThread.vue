@@ -55,7 +55,7 @@ load()
 <style scoped>
 .thread {
   padding: var(--spacing);
-  background: var(--color-bg);
+  background: rgba(255, 255, 255, 0.04);
   border-top: 1px solid var(--color-border);
 }
 </style>
