@@ -292,9 +292,11 @@ if not DEBUG:
     # защита от подмены картинки скриптом
     SECURE_CONTENT_TYPE_NOSNIFF = True
 
-    # Сессионные куки и CSRF-токен передаются только по https
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+    # Сессионные куки и CSRF-токен передаются только по https.
+    # Флаг отключается на время, пока сайт работает по http —
+    # иначе браузер не отправит куку и формы не пройдут проверку
+    SESSION_COOKIE_SECURE = config('SECURE_COOKIES', default=True, cast=bool)
+    CSRF_COOKIE_SECURE = config('SECURE_COOKIES', default=True, cast=bool)
 
     # Страницу нельзя встроить в iframe на чужом сайте —
     # защита от кликджекинга
