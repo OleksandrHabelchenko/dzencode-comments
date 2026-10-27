@@ -1,15 +1,40 @@
+// Глобальные стили, переменные и анимированный фон.
 
 :root {
-  --color-bg: #0f1115;
-  --color-surface: #181b21;
-  --color-border: #262a33;
-  --color-text: #e6e8eb;
-  --color-text-muted: #8b919c;
-  --color-accent: #4f8cff;
-  --color-danger: #ff5c5c;
+  // --- Цвета ---
+  // Фон тёмный с лёгким синим оттенком
+  --color-bg: #0b0d12;
+  --color-bg-elevated: #11141b;
 
-  --radius: 12px;
+  // Поверхности карточек полупрозрачные: сквозь них
+  // просвечивает фон, что и даёт эффект стекла
+  --color-surface: rgba(20, 24, 33, 0.55);
+  --color-surface-hover: rgba(28, 33, 44, 0.65);
+
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.14);
+
+  --color-text: #e8eaed;
+  --color-text-muted: #8b919c;
+  --color-text-dim: #5f656f;
+
+  // Приглушённый сине-фиолетовый: заметный, но не кричащий
+  --color-accent: #277b54;
+  --color-accent-soft: rgba(74, 222, 128, 0.12);
+  --color-danger: #ff6b6b;
+  --color-success: #4e8261;
+
+  // --- Размеры ---
+  --radius-sm: 12px;
+  --radius: 20px;
+  --radius-lg: 28px;
   --spacing: 16px;
+
+  // --- Тени ---
+  // Мягкая тень с большим радиусом создаёт ощущение
+  // приподнятости карточки над фоном
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -18,36 +43,87 @@
   padding: 0;
 }
 
+html {
+  // Плавная прокрутка при переходах по якорям
+  scroll-behavior: smooth;
+}
+
 body {
+  position: relative;
+  min-height: 100vh;
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.5;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  // Сглаживание шрифта: на тёмном фоне текст
+  // без него выглядит слишком жирным
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .background__blob {
+    animation: none;
+  }
 }
 
 #app {
-  max-width: 900px;
+  max-width: 980px;
   margin: 0 auto;
-  padding: calc(var(--spacing) * 2) var(--spacing);
+  padding: calc(var(--spacing) * 3) var(--spacing) calc(var(--spacing) * 4);
 }
 
-// Элементы форм: собраны в одном месте,
-// чтобы поля выглядели одинаково во всех компонентах
+// --- Типографика ---
+//
+// Один шрифт, иерархия строится на весе и размере.
+
+h1 {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+code,
+pre {
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  font-size: 0.92em;
+}
+
+// --- Элементы форм ---
 
 input,
 textarea {
   width: 100%;
-  padding: 10px 12px;
-  background: var(--color-bg);
+  padding: 11px 14px;
+  background: rgba(0, 0, 0, 0.25);
   color: var(--color-text);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-family: inherit;
   font-size: 15px;
+  transition: border-color 0.2s, background 0.2s;
+
+  &::placeholder {
+    color: var(--color-text-dim);
+  }
 
   &:focus {
     outline: none;
     border-color: var(--color-accent);
+    background: rgba(0, 0, 0, 0.35);
   }
 
   &.has-error {
@@ -57,17 +133,94 @@ textarea {
 
 textarea {
   resize: vertical;
-  min-height: 120px;
+  min-height: 130px;
+  line-height: 1.6;
 }
 
 input[type='file'] {
-  padding: 8px;
+  padding: 9px 12px;
   font-size: 14px;
+  cursor: pointer;
+
+  &::file-selector-button {
+    margin-right: 12px;
+    padding: 6px 12px;
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    border: none;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
 }
+
+// --- Кнопки ---
+
+.button-primary,
+.button-secondary {
+  padding: 11px 22px;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.button-primary {
+  background: var(--color-accent);
+  color: #6f7480;
+  font-weight: 600;
+
+  &:hover:not(:disabled) {
+    background: #5ee68f;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(74, 222, 128, 0.25);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.button-secondary {
+  background: transparent;
+  color: var(--color-text-muted);
+  border-color: var(--color-border-strong);
+
+  &:hover {
+    color: var(--color-text);
+    background: rgba(255, 255, 255, 0.04);
+  }
+}
+
+.link-button {
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--color-accent);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// --- Вспомогательные классы ---
 
 .error {
   display: block;
-  margin-top: 4px;
+  margin-top: 5px;
   color: var(--color-danger);
   font-size: 13px;
 }
@@ -77,35 +230,12 @@ input[type='file'] {
   font-size: 14px;
 }
 
-.button-primary,
-.button-secondary {
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 15px;
-  cursor: pointer;
-  border: 1px solid transparent;
-}
-
-.button-primary {
-  background: var(--color-accent);
-  color: #fff;
-
-  &:hover:not(:disabled) {
-    filter: brightness(1.1);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-}
-
-.button-secondary {
-  background: transparent;
-  color: var(--color-text-muted);
-  border-color: var(--color-border);
-
-  &:hover {
-    color: var(--color-text);
-  }
+// Стеклянная карточка: полупрозрачный фон плюс размытие
+// того, что под ней. Основной приём из референса.
+.glass {
+  background: var(--color-surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
 }

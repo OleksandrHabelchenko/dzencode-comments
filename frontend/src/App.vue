@@ -10,6 +10,7 @@ import CommentForm from '@/components/CommentForm.vue'
 import CommentTable from '@/components/CommentTable.vue'
 import FileLightbox from '@/components/FileLightbox.vue'
 import PaginationBar from '@/components/PaginationBar.vue'
+import VantaBackground from '@/components/VantaBackground.vue'
 import { useWebSocket } from '@/composables/useWebSocket'
 import { useCommentsStore } from '@/stores/comments'
 
@@ -44,13 +45,19 @@ function onOpenAttachment(attachment) {
 </script>
 
 <template>
+  <!-- Анимированный фон на WebGL, позиционируется сам -->
+  <VantaBackground />
+
   <main>
     <header class="page-header">
       <h1>Комментарии</h1>
 
-      <span class="status" :class="{ 'is-online': isConnected }">
-        {{ isConnected ? 'Обновления в реальном времени' : 'Нет соединения' }}
-      </span>
+      <!-- Индикатор соединения: зелёная точка при активном WebSocket -->
+      <span
+        class="status"
+        :class="{ 'is-online': isConnected }"
+        :title="isConnected ? 'Обновления в реальном времени' : 'Нет соединения'"
+      />
     </header>
 
     <CommentForm @created="onCommentCreated" />
@@ -66,7 +73,8 @@ function onOpenAttachment(attachment) {
 
       <PaginationBar />
     </section>
-      <FileLightbox
+
+    <FileLightbox
       :attachment="activeAttachment"
       @close="activeAttachment = null"
     />
@@ -82,23 +90,17 @@ function onOpenAttachment(attachment) {
 }
 
 .status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--color-text-muted);
-}
-
-.status::before {
-  content: '';
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--color-danger);
+  transition: background 0.3s, box-shadow 0.3s;
 }
 
-.status.is-online::before {
-  background: #3fb950;
+.status.is-online {
+  background: var(--color-success);
+  /* Свечение вокруг точки подчёркивает активное состояние */
+  box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.15);
 }
 
 .count {
