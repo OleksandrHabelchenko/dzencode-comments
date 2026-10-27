@@ -1,0 +1,95 @@
+# Production-окружение.
+#
+# Отличия от разработки:
+#  - вместо runserver — Daphne, полноценный ASGI-сервер
+#  - фронтенд собран в статику, Vite не запускается
+#  - наружу открыт только порт 80 у nginx
+#  - код не монтируется с диска, он внутри образа
+
+services:
+
+  db:
+    image: mysql:8.0
+    container_name: comments_db_prod
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 90s
+
+  redis:
+    image: redis:7-alpine
+    container_name: comments_redis_prod
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: comments_backend_prod
+    restart: always
+    # Перед стартом применяем миграции и собираем статику админки.
+    # --noinput отключает вопросы: при автозапуске отвечать некому
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             daphne -b 0.0.0.0 -p 8000 config.asgi:application"
+    volumes:
+      # Общие тома с nginx: он раздаёт эти файлы напрямую
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery:
+    build: ./backend
+    container_name: comments_celery_prod
+    restart: always
+    command: celery -A config worker --loglevel=warning
+    volumes:
+      - media_volume:/app/media
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: comments_frontend_prod
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # Те же тома, что у backend — только на чтение
+      - static_volume:/app/staticfiles:ro
+      - media_volume:/app/media:ro
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
+  static_volume:
+  media_volume:

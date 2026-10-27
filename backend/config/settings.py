@@ -268,3 +268,34 @@ CORS_ALLOWED_ORIGINS = config(
 
 # Разрешаем передачу cookie — понадобится для сессий
 CORS_ALLOW_CREDENTIALS = True
+
+# --- Production ---
+
+# Папка, куда collectstatic соберёт статику админки и DRF.
+# В разработке Django находит эти файлы сам, в продакшене
+# их нужно собрать в одно место, откуда их раздаст nginx
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Домены, которым Django доверяет при отправке форм.
+# Без этого вход в админку по домену вернёт ошибку CSRF
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
+
+# Запрос приходит от nginx, а не напрямую от браузера.
+# Этот заголовок говорит Django, по какому протоколу
+# обратился клиент на самом деле
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Защитные заголовки включаются только в продакшене:
+# в разработке они мешали бы работе по http
+if not DEBUG:
+    # Браузер не будет угадывать тип файла по содержимому —
+    # защита от подмены картинки скриптом
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+
+    # Сессионные куки и CSRF-токен передаются только по https
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    # Страницу нельзя встроить в iframe на чужом сайте —
+    # защита от кликджекинга
+    X_FRAME_OPTIONS = 'DENY'

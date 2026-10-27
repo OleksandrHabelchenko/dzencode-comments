@@ -1,0 +1,26 @@
+# Production-образ фронтенда.
+#
+# Многоступенчатая сборка: Node нужен только чтобы собрать проект,
+# в финальный образ попадает лишь готовая статика и nginx.
+# Так образ весит ~50 МБ вместо ~400 МБ.
+
+# --- Ступень 1: сборка ---
+FROM node:22-alpine AS build
+
+WORKDIR /app
+
+# npm ci ставит версии строго по package-lock.json —
+# сборка воспроизводима, случайных обновлений не будет
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# --- Ступень 2: раздача ---
+FROM nginx:1.27-alpine
+
+# Забираем из первой ступени только собранные файлы
+COPY --from=build /app/dist /usr/share/nginx/html
+
+EXPOSE 80
