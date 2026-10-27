@@ -21,3 +21,5 @@ dist/
 .vscode/
 .idea/
 .DS_Store
+# Сертификаты Let's Encrypt: приватные ключи в репозиторий не попадают
+certbot/
