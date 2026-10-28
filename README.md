@@ -348,4 +348,3 @@ dzencode-comments/
 
 Каждая функциональность разрабатывалась в своей ветке и вливалась
 в `develop` после проверки. Формат сообщений — Conventional Commits.
-READMEEND
