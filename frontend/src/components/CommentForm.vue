@@ -316,7 +316,7 @@ async function submit() {
 .preview {
   margin-top: 12px;
   padding: 12px;
-  background: var(--color-bg);
+  background: rgba(0, 0, 0, 0.25);
   border: 1px dashed var(--color-border);
   border-radius: 8px;
 }
@@ -346,7 +346,7 @@ async function submit() {
   gap: 8px;
   margin-top: 8px;
   padding: 6px 10px;
-  background: var(--color-bg);
+  background: rgba(0, 0, 0, 0.25);
   border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 14px;
