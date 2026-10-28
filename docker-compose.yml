@@ -23,7 +23,7 @@ services:
       # Django не должен стартовать раньше, чем база будет готова принимать подключения.
       # start_period даёт MySQL время на первичную инициализацию —
       # неудачные проверки в этот период не считаются провалом.
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_ROOT_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${DB_ROOT_PASSWORD}"]
       interval: 5s
       timeout: 5s
       retries: 20
